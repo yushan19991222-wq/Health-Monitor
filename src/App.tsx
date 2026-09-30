@@ -2052,7 +2052,8 @@ export default function App() {
                 next ? '🤫' : '🔔'
               );
             }}
-            className={`flex items-center gap-1 px-1.5 sm:px-2 py-1 rounded text-[10px] sm:text-[11px] font-bold border transition-all ${
+            style={{ height: '28px', width: '84px' }}
+            className={`flex items-center justify-center gap-1 rounded text-[10px] sm:text-[11px] font-bold border transition-all ${
               isMeetingMode
                 ? 'bg-amber-950/60 border-amber-500/60 text-amber-300 shadow-[0_0_8px_rgba(245,158,11,0.2)]'
                 : 'bg-[#030508] border-slate-800 text-slate-400 hover:border-slate-700'
