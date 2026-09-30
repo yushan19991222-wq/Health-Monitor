@@ -74,7 +74,7 @@ export const FacialScoreCard: React.FC<FacialScoreCardProps> = ({
           <div className="flex items-center gap-2 min-w-0">
             <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse shadow-[0_0_8px_rgba(6,182,212,0.6)] shrink-0" />
             <span className="text-[11px] font-bold text-slate-200 tracking-wider uppercase truncate">
-              [BIO_CHARISMA // 生物神采]
+              [BIO_CHARISMA]
             </span>
           </div>
 
