@@ -7,6 +7,14 @@ interface ActivityLogViewProps {
   onClear: () => void;
 }
 
+// Helper to strip all emoji characters for clean Overwatch terminal log style
+const stripEmoji = (str: string) => {
+  return str
+    .replace(/[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{1F1E6}-\u{1F1FF}\u{1F600}-\u{1F64F}\u{1F680}-\u{1F6FF}\u{1F900}-\u{1F9FF}\u{1FA70}-\u{1FAFF}\u{FE0F}\u{200D}]/gu, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+};
+
 export const ActivityLogView: React.FC<ActivityLogViewProps> = ({ events, onClear }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -72,8 +80,7 @@ export const ActivityLogView: React.FC<ActivityLogViewProps> = ({ events, onClea
                   <span className={`text-[9px] font-bold px-1 py-0.2 rounded border border-slate-800 shrink-0 ${tagColor}`}>
                     {tag}
                   </span>
-                  <span className="text-xs shrink-0">{ev.icon}</span>
-                  <span className="text-slate-300 text-[11px] truncate">{ev.message}</span>
+                  <span className="text-slate-300 text-[11px] truncate">{stripEmoji(ev.message)}</span>
                 </div>
 
                 <div className="flex items-center gap-1.5 shrink-0">

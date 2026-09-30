@@ -78,11 +78,11 @@ export const CameraFeed: React.FC<CameraFeedProps> = ({
       : '';
 
   return (
-    <div className="flex flex-col gap-2.5 h-full justify-between">
-      {/* CCTV Viewport Container */}
+    <div className="flex flex-col gap-2.5 w-full h-full min-h-0 justify-between">
+      {/* CCTV Viewport Container - Flex-1 dynamically adapts height to match right block */}
       <div
         ref={containerRef}
-        className="relative w-full flex-1 min-h-[280px] sm:min-h-[320px] bg-[#04060a] rounded-md overflow-hidden border border-slate-800 shadow-2xl group flex items-center justify-center cctv-brackets"
+        className="relative w-full flex-1 min-h-0 bg-[#04060a] rounded-md overflow-hidden border border-slate-800 shadow-2xl group flex items-center justify-center cctv-brackets"
       >
         {/* Real Video Element */}
         <video

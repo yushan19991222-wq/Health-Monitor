@@ -26,6 +26,7 @@ export interface EmotionData {
   emoji: string;
   score: number;
   colorClass: string;
+  primaryEmotion?: string;
 }
 
 export interface HealthTrendPoint {
@@ -33,6 +34,11 @@ export interface HealthTrendPoint {
   timestamp: number;
   score: number;
   fatigueIndex: number;
+  stressScore?: number;
+  fatigueScore?: number;
+  moodScore?: number;
+  bodyScore?: number;
+  recoveryScore?: number;
   emotionLabel?: string;
   emotionEmoji?: string;
   eventDelta: number;

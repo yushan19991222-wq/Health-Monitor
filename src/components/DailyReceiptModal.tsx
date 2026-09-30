@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState, useMemo } from 'react';
 import { Download, Share2, Check, Sparkles, Trophy, X, Terminal, Heart } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { DailySummaryStats, HealthEvent } from '../types';
@@ -22,6 +22,13 @@ export const DailyReceiptModal: React.FC<DailyReceiptModalProps> = ({
   const [isScanned, setIsScanned] = useState(false);
   const [scanMessage, setIsScanMessage] = useState('');
   const [isBarcodeHovered, setIsBarcodeHovered] = useState(false);
+
+  // Stable session ID generated once per modal opening session, preventing continuous re-render flickering
+  const sessionId = useMemo(() => {
+    if (!isOpen) return '0x4F1A_OHG';
+    const hex = Math.floor(0x1000 + Math.random() * 0xefff).toString(16).toUpperCase();
+    return `0x${hex}_OHG`;
+  }, [isOpen]);
 
   // Close modal on ESC key
   useEffect(() => {
@@ -108,7 +115,7 @@ export const DailyReceiptModal: React.FC<DailyReceiptModalProps> = ({
     ctx.font = '12px monospace';
     ctx.fillText(`DATE: ${stats.date}`, 40, 130);
     ctx.fillText(`CASHIER: LOCAL_EDGE_INFERENCE_v2`, 40, 150);
-    ctx.fillText(`SESSION: OVW_SHIFT_0x${Date.now().toString(16).slice(-4).toUpperCase()}`, 40, 170);
+    ctx.fillText(`SESSION: OVW_SHIFT_${sessionId}`, 40, 170);
 
     ctx.fillText('----------------------------------------', 40, 200);
 
@@ -266,7 +273,7 @@ export const DailyReceiptModal: React.FC<DailyReceiptModalProps> = ({
   return (
     <div
       id="daily-receipt-modal"
-      className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-300 font-mono"
+      className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 overflow-hidden animate-in fade-in duration-300 font-mono"
     >
       {/* Target Canvas Hidden for rendering download */}
       <canvas
@@ -276,7 +283,7 @@ export const DailyReceiptModal: React.FC<DailyReceiptModalProps> = ({
         className="hidden"
       />
 
-      <div className="bg-[#0b101b] border border-slate-800 max-w-md w-full p-4 sm:p-5 rounded-xl shadow-2xl relative flex flex-col items-center my-auto">
+      <div className="bg-[#0b101b] border border-slate-800 max-w-md w-full p-4 sm:p-5 rounded-xl shadow-2xl relative flex flex-col items-center my-auto max-h-[95vh] overflow-y-auto scrollbar-thin">
         
         {/* Modal Header */}
         <div className="w-full flex justify-between items-center mb-3 pb-2 border-b border-slate-800 shrink-0">
@@ -341,7 +348,7 @@ export const DailyReceiptModal: React.FC<DailyReceiptModalProps> = ({
                 </div>
                 <div className="flex justify-between">
                   <span>SESSION_ID:</span>
-                  <span className="text-zinc-900">0x{Date.now().toString(16).slice(-4).toUpperCase()}_OHG</span>
+                  <span className="text-zinc-900">{sessionId}</span>
                 </div>
               </div>
 

@@ -38,6 +38,7 @@ import { FacialScoreCard } from './components/FacialScoreCard';
 import { CrossTabControlBar } from './components/CrossTabControlBar';
 import { ScreensaverMemeTakeover } from './components/ScreensaverMemeTakeover';
 import { StretchStickmanScreensaver } from './components/StretchStickmanScreensaver';
+import { InitialOnboardingModal } from './components/InitialOnboardingModal';
 import { evaluateFaceScoreWithGemini, computeLocalFaceScore } from './utils/faceScoreEvaluator';
 import {
   fireDesktopNotification,
@@ -68,13 +69,28 @@ export default function App() {
       },
     ];
   });
-  const [settings, setSettings] = useState<GuardianSettings>({
-    baseAge: 25,
-    offWorkTime: '17:30',
-    sedentaryLimitMinutes: 45,
-    soundEnabled: true,
-    desktopNotificationsEnabled: true,
-    voiceAlertsEnabled: true,
+  const [settings, setSettings] = useState<GuardianSettings>(() => {
+    try {
+      const saved = localStorage.getItem('overwatch_settings');
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return {
+      baseAge: 25,
+      offWorkTime: '17:30',
+      sedentaryLimitMinutes: 45,
+      soundEnabled: true,
+      desktopNotificationsEnabled: true,
+      voiceAlertsEnabled: true,
+    };
+  });
+
+  // First-time onboarding popup state
+  const [isOnboardingOpen, setIsOnboardingOpen] = useState<boolean>(() => {
+    try {
+      return !localStorage.getItem('overwatch_user_initialized');
+    } catch {
+      return false;
+    }
   });
 
   const [isMeetingMode, setIsMeetingMode] = useState<boolean>(false);
@@ -220,6 +236,30 @@ export default function App() {
     }
   }, []);
 
+  // Track right column height to ensure left camera block matches it with 100% precision
+  const rightColumnRef = useRef<HTMLDivElement>(null);
+  const [rightColumnHeight, setRightColumnHeight] = useState<number | null>(null);
+
+  useEffect(() => {
+    const el = rightColumnRef.current;
+    if (!el) return;
+    const updateHeight = () => {
+      if (window.innerWidth >= 1024) {
+        setRightColumnHeight(el.clientHeight);
+      } else {
+        setRightColumnHeight(null);
+      }
+    };
+    updateHeight();
+    const ro = new ResizeObserver(updateHeight);
+    ro.observe(el);
+    window.addEventListener('resize', updateHeight);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener('resize', updateHeight);
+    };
+  }, []);
+
   // Trackers ref for high-frequency detection logic
   const detectionRef = useRef({
     yawnStartTime: 0 as number | null,
@@ -318,7 +358,7 @@ export default function App() {
   const modifyScore = useCallback(
     (delta: number, reason: string, icon: string = '⚡') => {
       setHealthScore((prev) => {
-        const nextScore = Math.max(0, Math.min(120, prev + delta));
+        const nextScore = Math.max(0, Math.min(100, prev + delta));
         const now = new Date();
         const roundedMinutes = Math.floor(now.getMinutes() / 5) * 5;
         const hh = String(now.getHours()).padStart(2, '0');
@@ -326,14 +366,27 @@ export default function App() {
         const timeSlot = `${hh}:${mm}`;
 
         setTrendHistory((history) => {
+          // Dynamic 6-axis real-time composite fatigue load (1 ~ 10):
+          const instantFrownLoad = (telemetry.frown >= 0.08 ? 2.5 : 0);
+          const instantYawnLoad = (delta < 0 && reason.includes('哈欠') ? 4 : telemetry.mar > 0.45 ? 2.5 : 0);
+          const instantProximityLoad = (telemetry.proximity > 60 ? 2 : 0);
+          const instantBlinkLoad = (telemetry.isFrequentBlinking ? 2 : 0);
+          const instantDeskLoad = (detectionRef.current.consecutiveDeskSecs > (settings.sedentaryLimitMinutes * 45) ? 2 : 0);
+
+          const compositeFatigue = delta < 0
+            ? Math.min(10, Math.max(3, Math.round(Math.abs(delta) * 1.5 + instantFrownLoad + instantYawnLoad + instantProximityLoad + instantBlinkLoad + instantDeskLoad)))
+            : 1;
+
           const newPoint: HealthTrendPoint = {
             time: timeSlot,
             timestamp: now.getTime(),
             score: nextScore,
-            fatigueIndex: delta < 0 ? Math.min(10, Math.max(2, Math.abs(delta) * 2)) : 1,
+            fatigueIndex: compositeFatigue,
             eventDelta: delta,
             eventName: reason.replace(/[^a-zA-Z0-9\u4e00-\u9fa5]/g, '').slice(0, 10),
             eventType: delta < 0 ? 'penalty' : delta > 0 ? 'reward' : 'info',
+            emotionLabel: telemetry.emotion?.label,
+            emotionEmoji: telemetry.emotion?.emoji,
           };
 
           // If current 5-minute slot already exists, update latest score & event in this 5-min window
@@ -350,10 +403,10 @@ export default function App() {
       });
       logEvent(reason, delta, delta < 0 ? 'penalty' : 'reward', icon);
     },
-    [logEvent]
+    [logEvent, telemetry, settings.sedentaryLimitMinutes]
   );
 
-  // Auto record health score every 5-minute real-time interval
+  // Auto record health score every 5-minute real-time interval with 6-axis telemetry integration
   useEffect(() => {
     const timer = setInterval(() => {
       const now = new Date();
@@ -366,23 +419,42 @@ export default function App() {
         if (history.length > 0 && history[history.length - 1].time === timeSlot) {
           return history;
         }
+
+        // Composite 6-axis fatigue evaluation for idle periodic sampling
+        const currentFatigueLoad = Math.min(
+          10,
+          Math.max(
+            1,
+            Math.round(
+              (telemetry.mar > 0.45 ? 3 : 0) +
+              (telemetry.frown >= 0.09 ? 2.5 : 0) +
+              (telemetry.proximity > 60 ? 2 : 0) +
+              (telemetry.isFrequentBlinking ? 2 : 0) +
+              (detectionRef.current.consecutiveDeskSecs > (settings.sedentaryLimitMinutes * 50) ? 2.5 : 0) +
+              (healthScore < 80 ? 1 : 0)
+            )
+          )
+        );
+
         return [
           ...history,
           {
             time: timeSlot,
             timestamp: now.getTime(),
             score: healthScore,
-            fatigueIndex: healthScore < 80 ? 3 : 1,
+            fatigueIndex: currentFatigueLoad,
             eventDelta: 0,
-            eventName: '定時健康檢查',
+            eventName: '六維綜合巡檢',
             eventType: 'info' as const,
+            emotionLabel: telemetry.emotion?.label,
+            emotionEmoji: telemetry.emotion?.emoji,
           },
         ].slice(-40);
       });
     }, 10000);
 
     return () => clearInterval(timer);
-  }, [healthScore]);
+  }, [healthScore, telemetry, settings.sedentaryLimitMinutes]);
 
   // Cross-tab & Multi-interface Hazard Dispatcher (OS Notifications, TTS Voice, Title Flashing, PiP)
   const dispatchHazardAlert = useCallback(
@@ -1024,7 +1096,8 @@ export default function App() {
   const handleEscapeOvertime = useCallback((ranAway: boolean) => {
     if (ranAway) {
       setIsClockedOut(true);
-      setIsOffWorkPunchModalOpen(true);
+      setIsOvertime(false);
+      setIsReceiptOpen(true);
       try {
         soundSynth.playRewardJingle();
         soundSynth.playOracleReveal();
@@ -1967,6 +2040,12 @@ export default function App() {
   const handleSaveSettings = useCallback(
     (newSettings: GuardianSettings) => {
       setSettings(newSettings);
+      try {
+        localStorage.setItem('overwatch_settings', JSON.stringify(newSettings));
+      } catch (err) {
+        console.warn('Failed to save settings to localStorage:', err);
+      }
+      setIsSettingsOpen(false);
       logEvent(
         `守護參數已更新：基礎年齡 ${newSettings.baseAge}歲 / 下班時間 ${newSettings.offWorkTime}`,
         0,
@@ -1975,6 +2054,33 @@ export default function App() {
       );
     },
     [logEvent]
+  );
+
+  const handleCompleteOnboarding = useCallback(
+    (newSettings: GuardianSettings) => {
+      setSettings(newSettings);
+      try {
+        localStorage.setItem('overwatch_settings', JSON.stringify(newSettings));
+        localStorage.setItem('overwatch_user_initialized', 'true');
+      } catch (err) {
+        console.warn('Failed to save onboarding settings to localStorage:', err);
+      }
+      setIsOnboardingOpen(false);
+      logEvent(
+        `守護者系統初次校準完成：生理年齡 ${newSettings.baseAge} 歲，今日表定下班 ${newSettings.offWorkTime}，光學監控已全線啟動！`,
+        0,
+        'info',
+        '🛡️'
+      );
+      triggerToast({
+        title: '🛡️ 守護者監控系統已啟動',
+        desc: `基準年齡 ${newSettings.baseAge} 歲・下班目標 ${newSettings.offWorkTime}`,
+        badge: '校準完成',
+        badgeColor: 'bg-cyan-500 text-slate-950',
+        type: 'general',
+      });
+    },
+    [logEvent, triggerToast]
   );
 
   return (
@@ -2090,11 +2196,15 @@ export default function App() {
         </div>
       </header>
 
-      {/* Main Content Layout */}
-      <main className="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-5 flex flex-col gap-5">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
-          {/* Left / Center View: Camera & Controls */}
-          <div className="lg:col-span-8 flex flex-col justify-between h-full">
+      {/* Main Content Layout - Matches navbar margins with no max-w restriction */}
+      <main className="flex-1 w-full px-2.5 sm:px-6 py-3 sm:py-5 flex flex-col gap-5">
+        {/* Row 1: Camera Feed (Left 8 cols) & HUD + Facial Score (Right 4 cols) - 100% Equal Height */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start min-h-0">
+          {/* Left / Center View: Camera & Controls - Matches right column height dynamically */}
+          <div
+            style={rightColumnHeight ? { height: `${rightColumnHeight}px` } : undefined}
+            className="lg:col-span-8 flex flex-col h-full min-h-0"
+          >
             <CameraFeed
               videoRef={videoRef}
               canvasRef={canvasRef}
@@ -2117,7 +2227,7 @@ export default function App() {
           </div>
 
           {/* Right Column: Gamified HUD & Facial Charisma Radar */}
-          <div className="lg:col-span-4 flex flex-col gap-4 justify-between h-full">
+          <div ref={rightColumnRef} className="lg:col-span-4 flex flex-col gap-4">
             <FloatingHUD
               healthScore={healthScore}
               baseAge={settings.baseAge}
@@ -2127,6 +2237,15 @@ export default function App() {
               currentEmotion={telemetry.emotion}
               isClockedOut={isClockedOut}
               onClockInAgain={() => setIsClockedOut(false)}
+              onClockOut={() => {
+                setIsClockedOut(true);
+                setIsOvertime(false);
+                setIsReceiptOpen(true);
+                try {
+                  soundSynth.playRewardJingle();
+                } catch {}
+                logEvent('🏁 打卡下班完成！今日戰鬥結束，已生成結算收據', 0, 'info', '🏁');
+              }}
             />
 
             {/* AI Facial Charisma Radar & Beauty Rating Card */}
@@ -2141,14 +2260,17 @@ export default function App() {
           </div>
         </div>
 
-        {/* Health & Fatigue Trend Chart Side-by-Side with Activity Log */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch min-h-0 lg:h-[380px]">
+        {/* Row 2: Health & Fatigue Trend Chart Side-by-Side with Activity Log - 100% Equal Height */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch min-h-0 lg:h-[460px]">
           <div className="lg:col-span-7 flex flex-col h-full min-h-0">
             <HealthTrendChart
               trendHistory={trendHistory}
               events={events}
               currentScore={healthScore}
               currentEmotion={telemetry.emotion}
+              telemetry={telemetry}
+              statsSummary={statsSummary}
+              sedentaryLimitMinutes={settings.sedentaryLimitMinutes}
             />
           </div>
           <div className="lg:col-span-5 flex flex-col h-full min-h-0">
@@ -2172,7 +2294,7 @@ export default function App() {
       </main>
 
       {/* Surveillance Terminal Status Footer */}
-      <footer className="py-2.5 px-3 sm:px-6 text-[10px] sm:text-[11px] font-mono text-slate-500 border-t border-slate-800/80 bg-[#06080e]/90 flex flex-col sm:flex-row justify-between items-start sm:items-center max-w-7xl mx-auto w-full gap-2 select-none tracking-wider">
+      <footer className="py-2.5 px-2.5 sm:px-6 text-[10px] sm:text-[11px] font-mono text-slate-500 border-t border-slate-800/80 bg-[#06080e]/90 flex flex-col sm:flex-row justify-between items-start sm:items-center w-full gap-2 select-none tracking-wider">
         <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
           <span className="flex items-center gap-1 text-cyan-400 font-bold">
             <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
@@ -2193,6 +2315,12 @@ export default function App() {
       </footer>
 
       {/* Modals */}
+      <InitialOnboardingModal
+        isOpen={isOnboardingOpen}
+        onComplete={handleCompleteOnboarding}
+        defaultSettings={settings}
+      />
+
       <SettingsModal
         isOpen={isSettingsOpen}
         onClose={handleCloseSettings}

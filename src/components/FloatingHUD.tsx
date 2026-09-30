@@ -21,6 +21,7 @@ interface FloatingHUDProps {
   currentEmotion?: EmotionData | null;
   isClockedOut?: boolean;
   onClockInAgain?: () => void;
+  onClockOut?: () => void;
 }
 
 export const FloatingHUD: React.FC<FloatingHUDProps> = ({
@@ -32,6 +33,7 @@ export const FloatingHUD: React.FC<FloatingHUDProps> = ({
   currentEmotion,
   isClockedOut,
   onClockInAgain,
+  onClockOut,
 }) => {
   // Real-time tick for exact off-work chronograph countdown (100ms precision)
   const [now, setNow] = useState<Date>(() => new Date());
@@ -155,7 +157,7 @@ export const FloatingHUD: React.FC<FloatingHUDProps> = ({
   return (
     <div
       id="main-health-hud"
-      className={`flex-1 rounded-md p-4 border transition-all duration-300 relative overflow-hidden backdrop-blur-md cctv-brackets flex flex-col justify-start gap-3.5 sm:gap-4 ${
+      className={`rounded-md p-4 border transition-all duration-300 relative overflow-hidden backdrop-blur-md cctv-brackets flex flex-col gap-3.5 sm:gap-4 ${
         isOvertime
           ? 'bg-rose-950/30 border-rose-500/70 shadow-[0_0_20px_rgba(244,63,94,0.25)] animate-life-drain'
           : `bg-[#06080e] ${borderAccentClass} shadow-xl`
@@ -328,12 +330,33 @@ export const FloatingHUD: React.FC<FloatingHUDProps> = ({
               </span>
             </div>
 
-            {isClockedOut && onClockInAgain ? (
+            {isClockedOut ? (
+              onClockInAgain && (
+                <button
+                  onClick={onClockInAgain}
+                  className="px-2 py-0.5 rounded bg-emerald-950/80 hover:bg-emerald-900 border border-emerald-500/60 text-emerald-300 hover:text-white text-[9px] font-bold transition shrink-0 cursor-pointer flex items-center gap-1 shadow-[0_0_8px_rgba(16,185,129,0.3)]"
+                  title="重新啟動守護者下班碼表"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                    className="w-3 h-3 text-emerald-300 shrink-0"
+                    aria-hidden="true"
+                  >
+                    <path d="M12 5V2L8 6l4 4V7c3.31 0 6 2.69 6 6 0 2.97-2.16 5.44-5 5.92v2.02c3.95-.49 7-3.85 7-7.94 0-4.42-3.58-8-8-8zm-6 8c0-1.65.67-3.15 1.76-4.24L6.34 7.34C4.9 8.79 4 10.79 4 13c0 4.09 3.05 7.45 7 7.94v-2.02c-2.84-.48-5-2.95-5-5.92z" />
+                  </svg>
+                  <span>重新上班</span>
+                </button>
+              )
+            ) : (isOverdue || isOvertime) && onClockOut ? (
               <button
-                onClick={onClockInAgain}
-                className="px-2 py-0.5 rounded bg-emerald-950/80 hover:bg-emerald-900 border border-emerald-500/60 text-emerald-300 hover:text-white text-[9px] font-bold transition shrink-0 cursor-pointer flex items-center gap-1 shadow-[0_0_8px_rgba(16,185,129,0.3)] animate-pulse"
+                onClick={onClockOut}
+                className="px-2.5 py-0.5 rounded bg-rose-600 hover:bg-rose-500 text-white text-[9px] font-bold transition shrink-0 cursor-pointer flex items-center gap-1 shadow-[0_0_12px_rgba(244,63,94,0.6)] animate-pulse border border-rose-400"
+                title="立即打卡下班並領取結算收據"
               >
-                🔄 重新上班
+                <span>🏁</span>
+                <span>打卡下班</span>
               </button>
             ) : (
               <span
