@@ -1,28 +1,37 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="64" height="64" fill="none">
-  <defs>
-    <linearGradient id="previewBg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#00f0ff"/>
-      <stop offset="100%" stop-color="#0284c7"/>
-    </linearGradient>
-  </defs>
+  <style>
+    /* Default / Light Mode Browser: Deep Website Obsidian Navy Card with Cyber Cyan Lines */
+    .preview-card { fill: #070a0f; stroke: #00f0ff; stroke-width: 0.8; }
+    .preview-divider { stroke: #00f0ff; stroke-opacity: 0.9; stroke-width: 1.1; }
+    .preview-dot { fill: #00f0ff; }
+    .preview-eye { stroke: #00f0ff; stroke-width: 1.2; }
+    .preview-bracket { stroke: #00f0ff; stroke-width: 1.2; }
 
-  <!-- 1. Outer Filled Window Card (Material Symbols Preview Base) -->
-  <rect x="2" y="2.5" width="20" height="19" rx="3.5" fill="url(#previewBg)"/>
+    /* Dark Mode Browser: Glowing Cyber Cyan Card with Deep Obsidian Lines */
+    @media (prefers-color-scheme: dark) {
+      .preview-card { fill: #00f0ff; stroke: none; }
+      .preview-divider { stroke: #070a0f; stroke-opacity: 0.9; stroke-width: 1.1; }
+      .preview-dot { fill: #070a0f; }
+      .preview-eye { stroke: #070a0f; stroke-width: 1.2; }
+      .preview-bracket { stroke: #070a0f; stroke-width: 1.2; }
+    }
+  </style>
 
-  <!-- 2. Window Top Bar Divider Line (White) -->
-  <line x1="2" y1="7" x2="22" y2="7" stroke="#ffffff" stroke-width="1.2" stroke-opacity="0.85"/>
+  <!-- 1. Outer Window Card -->
+  <rect class="preview-card" x="2" y="2.5" width="20" height="19" rx="3.5"/>
 
-  <!-- 3. Top Bar Window Dots (White) -->
-  <circle cx="5" cy="4.8" r="0.75" fill="#ffffff"/>
-  <circle cx="7.2" cy="4.8" r="0.75" fill="#ffffff" fill-opacity="0.75"/>
-  <circle cx="9.4" cy="4.8" r="0.75" fill="#ffffff" fill-opacity="0.75"/>
+  <!-- 2. Window Header Divider Line -->
+  <line class="preview-divider" x1="2" y1="7.2" x2="22" y2="7.2"/>
 
-  <!-- 4. Central Surveillance Eye Contour (White) -->
-  <path d="M6 14.2C7.3 11.8 9.5 10.5 12 10.5C14.5 10.5 16.7 11.8 18 14.2C16.7 16.6 14.5 17.9 12 17.9C9.5 17.9 7.3 16.6 6 14.2Z" stroke="#ffffff" stroke-width="1.3" fill="none" stroke-linejoin="round"/>
+  <!-- 3. Header Window Dots -->
+  <circle class="preview-dot" cx="5" cy="4.8" r="0.75"/>
+  <circle class="preview-dot" cx="7.2" cy="4.8" r="0.75" opacity="0.8"/>
+  <circle class="preview-dot" cx="9.4" cy="4.8" r="0.75" opacity="0.8"/>
 
-  <!-- 5. Inner Code Brackets < > inside Eye (White) -->
-  <!-- Left Angle Bracket < -->
-  <path d="M10.5 12.6L8.8 14.2L10.5 15.8" stroke="#ffffff" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
-  <!-- Right Angle Bracket > -->
-  <path d="M13.5 12.6L15.2 14.2L13.5 15.8" stroke="#ffffff" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- 4. Refined Sleek Eye Contour (1.2px) -->
+  <path class="preview-eye" d="M5.8 14.2C7.2 12 9.4 10.6 12 10.6C14.6 10.6 16.8 12 18.2 14.2C16.8 16.4 14.6 17.8 12 17.8C9.4 17.8 7.2 16.4 5.8 14.2Z" stroke-linejoin="round" fill="none"/>
+
+  <!-- 5. Inner Code Brackets < > (1.2px) -->
+  <path class="preview-bracket" d="M10.4 12.6L8.8 14.2L10.4 15.8" stroke-linecap="round" stroke-linejoin="round"/>
+  <path class="preview-bracket" d="M13.6 12.6L15.2 14.2L13.6 15.8" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>
