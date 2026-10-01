@@ -2077,6 +2077,37 @@ export default function App() {
     logEvent,
   ]);
 
+  // Auto-trigger BIO_CHARISMA initial face evaluation once onboarding is complete and face is first detected
+  const hasAutoScannedRef = useRef<boolean>(false);
+  useEffect(() => {
+    if (
+      !isOnboardingOpen &&
+      !faceScoreData &&
+      !isScanningFace &&
+      !hasAutoScannedRef.current &&
+      isModelLoaded &&
+      isCameraActive &&
+      telemetry.isFacePresent
+    ) {
+      // Allow 1.2 seconds for camera exposure & face landmarks to stabilize before auto-computing initial charisma
+      const timer = setTimeout(() => {
+        if (!faceScoreData && !isScanningFace && telemetry.isFacePresent) {
+          hasAutoScannedRef.current = true;
+          handleScanFaceCharisma(true, false);
+        }
+      }, 1200);
+      return () => clearTimeout(timer);
+    }
+  }, [
+    isOnboardingOpen,
+    faceScoreData,
+    isScanningFace,
+    isModelLoaded,
+    isCameraActive,
+    telemetry.isFacePresent,
+    handleScanFaceCharisma,
+  ]);
+
   // Compute Daily Summary Stats
   const getSummaryStats = (): DailySummaryStats => {
     const finalAge = Number((settings.baseAge + (100 - healthScore) * 0.8).toFixed(1));
