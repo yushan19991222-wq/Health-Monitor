@@ -240,7 +240,7 @@ export const DailyReceiptModal: React.FC<DailyReceiptModalProps> = ({
     const text = `🛡️【OVERWHELTCH | WATCH BEFORE YOU OVERWHELM 今日打卡結算】\n👤 基礎年齡: ${stats.baseAge}歲 ➡️ 預估生理年齡: ${stats.finalBodyAge}歲\n💖 健康存摺結餘: ${stats.finalHealthScore}/100 點\n🎖️ 評級: ${stats.title}\n💬 「${stats.quote}」\n#OVERWHELTCH #WatchBeforeYouOverwhelm #辦公室身心健康監視器`;
     navigator.clipboard.writeText(text).then(() => {
       setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      setTimeout(() => setCopied(false), 3000);
     });
   };
 
@@ -290,7 +290,7 @@ export const DailyReceiptModal: React.FC<DailyReceiptModalProps> = ({
           <div className="flex items-center gap-2">
             <Trophy className="w-4 h-4 text-cyan-400" />
             <span className="text-xs font-bold uppercase tracking-wider text-cyan-400 font-mono">
-              [ACTUARY_REPORT // RECEIPT]
+              [ACTUARY_REPORT]
             </span>
           </div>
           <button

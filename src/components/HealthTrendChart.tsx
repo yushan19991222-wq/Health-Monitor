@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import {
   ResponsiveContainer,
   ComposedChart,
@@ -74,6 +74,14 @@ export const alignToSlot = (
   }
 };
 
+export interface PeriodicCardSnapshot {
+  lastSlotKey: number;
+  healthScore: number;
+  stressScore: number;
+  fatigueScore: number;
+  recoveryScore: number;
+}
+
 export const HealthTrendChart: React.FC<HealthTrendChartProps> = ({
   trendHistory,
   events,
@@ -83,8 +91,8 @@ export const HealthTrendChart: React.FC<HealthTrendChartProps> = ({
   statsSummary,
   sedentaryLimitMinutes = 45,
 }) => {
-  // ─── 1. 五分鐘定時聚合快照（每 5 分鐘固定更新一次，不實時隨幀跳動） ───
-  const [periodicSnapshot, setPeriodicSnapshot] = useState(() => {
+  // ─── 1. 五分鐘定時聚合快照（每 5 分鐘固定更新一次，支援當日背景持久化記憶） ───
+  const calculateDimensions = useCallback(() => {
     const frownsCount = statsSummary?.frownsCaught ?? events.filter((e) => e.message.includes('眉') || e.icon === '😠').length;
     const yawnsCount = statsSummary?.yawnsCaught ?? events.filter((e) => e.message.includes('哈欠') || e.icon === '🥱').length;
     const blinksCount = events.filter((e) => e.message.includes('眨眼') || e.message.includes('乾眼') || e.icon === '👀').length;
@@ -98,50 +106,123 @@ export const HealthTrendChart: React.FC<HealthTrendChartProps> = ({
       ? Math.round(trendHistory.reduce((acc, pt) => acc + pt.score, 0) / trendHistory.length)
       : currentScore;
 
+    // 1. 壓力指數 (Stress Index: 0 ~ 100)
+    // A: 連續在座累積負荷 (每在座 10 分鐘 +5.5 分，最高 35 分)
+    const deskMins = (telemetry?.consecutiveDeskSeconds || 0) / 60;
+    const deskStress = Math.min(35, Math.round((deskMins / 10) * 5.5));
+    // B: 即時微表情張力感知 (0.01~0.08 線性感測，最高 30 分)
+    const frownVal = telemetry?.frown || 0;
+    const frownStress = Math.min(30, Math.round((Math.max(0, frownVal - 0.01) / 0.06) * 30));
+    // C: 前傾視距壓迫感知 (proximity > 45%，最高 20 分)
+    const proxVal = telemetry?.proximity || 0;
+    const proxStress = proxVal > 45 ? Math.min(20, Math.round(((proxVal - 45) / 25) * 20)) : 0;
+    // D: 歷史過勞/緊繃事件疊加
+    const incidentStress = Math.min(35, frownsCount * 12 + proximitiesCount * 5 + yawnsCount * 4);
+    const calculatedStress = Math.min(100, Math.max(12, Math.round(deskStress + frownStress + proxStress + incidentStress)));
+
+    // 2. 疲勞指數 (Fatigue Index: 0 ~ 100)
+    const deskFatigue = Math.min(45, Math.round((deskMins / (sedentaryLimitMinutes || 45)) * 35));
+    const blinksFatigue = (telemetry?.isFrequentBlinking ? 15 : 0) + blinksCount * 4;
+    const calculatedFatigue = Math.min(
+      100,
+      Math.max(8, Math.round(deskFatigue + yawnsCount * 15 + blinksFatigue + sedentaryCount * 12 + proximitiesCount * 4))
+    );
+
+    // 3. 修復活力 (Recovery Vitality: 0 ~ 100)
+    // A: 基礎活力儲備 (以當前健康存摺為母體，滿分健康自帶 60 點基礎修復力)
+    const baseVitality = Math.round(currentScore * 0.60);
+    // B: 良好微體態與面部舒展 (+12 點)
+    const isGoodPosture = proxVal > 0 && proxVal <= 45;
+    const postureBonus = isGoodPosture ? 8 : 0;
+    const emotionBonus = (telemetry?.emotion?.label === '愉悅微笑' || telemetry?.emotion?.label === '放鬆平靜') ? 10 : 0;
+    // C: 積極修復加成 (摸魚/離座/喝水/獲得獎勵)
+    const awayMins = (telemetry?.consecutiveAwaySeconds || 0) / 60;
+    const slackBonus = Math.min(25, Math.round(slack * 5 + awayMins * 4));
+    const waterBonus = Math.min(25, water * 12);
+    const rewardBonus = Math.min(20, rewards * 2);
+    // D: 長時間未休息的自然活力耗損
+    const continuousDrain = Math.min(35, Math.round(Math.max(0, (deskMins - 15) * 1.2)));
+    const calculatedRecovery = Math.min(
+      100,
+      Math.max(15, Math.round(baseVitality + postureBonus + emotionBonus + slackBonus + waterBonus + rewardBonus - continuousDrain))
+    );
+
+    return {
+      healthScore: avgScore,
+      stressScore: calculatedStress,
+      fatigueScore: calculatedFatigue,
+      recoveryScore: calculatedRecovery,
+    };
+  }, [events, trendHistory, currentScore, telemetry, statsSummary, sedentaryLimitMinutes]);
+
+  const [periodicSnapshot, setPeriodicSnapshot] = useState<PeriodicCardSnapshot>(() => {
+    try {
+      const today = new Date().toLocaleDateString('en-CA');
+      const saved = localStorage.getItem('overwatch_trend_snapshot');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && parsed.date === today && parsed.snapshot && (parsed.snapshot.stressScore > 0 || parsed.snapshot.recoveryScore > 0)) {
+          return parsed.snapshot;
+        }
+      }
+    } catch {}
+
+    const deskMins = (telemetry?.consecutiveDeskSeconds || 0) / 60;
+    const deskStress = Math.min(35, Math.round((deskMins / 10) * 5.5));
+    const frownVal = telemetry?.frown || 0;
+    const frownStress = Math.min(30, Math.round((Math.max(0, frownVal - 0.01) / 0.06) * 30));
+    const calculatedStress = Math.min(100, Math.max(12, Math.round(deskStress + frownStress)));
+    const calculatedRecovery = Math.min(100, Math.max(15, Math.round(currentScore * 0.60)));
+
     return {
       lastSlotKey: Math.floor(Date.now() / (5 * 60 * 1000)),
-      healthScore: avgScore,
-      stressScore: Math.min(100, Math.round(frownsCount * 10)),
-      fatigueScore: Math.min(100, Math.round(yawnsCount * 15 + blinksCount * 5 + sedentaryCount * 10 + proximitiesCount * 5)),
-      recoveryScore: Math.min(100, Math.max(0, Math.round(rewards * 2 + slack * 3 + water * 5))),
+      healthScore: currentScore,
+      stressScore: calculatedStress,
+      fatigueScore: 10,
+      recoveryScore: calculatedRecovery,
     };
   });
+
+  // 自動同步當日快照至 localStorage
+  useEffect(() => {
+    try {
+      const today = new Date().toLocaleDateString('en-CA');
+      localStorage.setItem(
+        'overwatch_trend_snapshot',
+        JSON.stringify({
+          date: today,
+          snapshot: periodicSnapshot,
+        })
+      );
+    } catch (err) {
+      console.warn('Failed to save trend snapshot to localStorage:', err);
+    }
+  }, [periodicSnapshot]);
 
   // 定期檢查並於每 5 分鐘邊界更新卡片快照
   useEffect(() => {
     const checkAndUpdateSlot = () => {
       const currentSlotKey = Math.floor(Date.now() / (5 * 60 * 1000));
       setPeriodicSnapshot((prev) => {
-        if (prev.lastSlotKey === currentSlotKey) {
-          return prev; // 未跨入新 5 分鐘時間段，維持原快照數值不變
+        // 如果原本數值因舊版本是 0，立即更新；否則維持 5 分鐘快照穩定
+        if (prev.lastSlotKey === currentSlotKey && (prev.stressScore > 0 || prev.recoveryScore > 0)) {
+          return prev;
         }
 
-        const frownsCount = statsSummary?.frownsCaught ?? events.filter((e) => e.message.includes('眉') || e.icon === '😠').length;
-        const yawnsCount = statsSummary?.yawnsCaught ?? events.filter((e) => e.message.includes('哈欠') || e.icon === '🥱').length;
-        const blinksCount = events.filter((e) => e.message.includes('眨眼') || e.message.includes('乾眼') || e.icon === '👀').length;
-        const sedentaryCount = statsSummary?.sedentaryLocksCount ?? events.filter((e) => e.message.includes('久坐') || e.icon === '🪑').length;
-        const proximitiesCount = events.filter((e) => e.message.includes('近') || e.message.includes('視距') || e.icon === '📐').length;
-        const rewards = events.filter((e) => e.delta > 0).reduce((sum, e) => sum + e.delta, 0);
-        const slack = statsSummary?.slackMinutesEarned || 0;
-        const water = events.filter((e) => e.message.includes('水') || e.icon === '💧').length;
-
-        const avgScore = trendHistory && trendHistory.length > 0
-          ? Math.round(trendHistory.reduce((acc, pt) => acc + pt.score, 0) / trendHistory.length)
-          : currentScore;
-
+        const dims = calculateDimensions();
         return {
           lastSlotKey: currentSlotKey,
-          healthScore: avgScore,
-          stressScore: Math.min(100, Math.round(frownsCount * 10)),
-          fatigueScore: Math.min(100, Math.round(yawnsCount * 15 + blinksCount * 5 + sedentaryCount * 10 + proximitiesCount * 5)),
-          recoveryScore: Math.min(100, Math.max(0, Math.round(rewards * 2 + slack * 3 + water * 5))),
+          ...dims,
         };
       });
     };
 
+    // 初始立即檢查一次，確保舊版 0 數值第一時間被修正
+    checkAndUpdateSlot();
+
     const interval = setInterval(checkAndUpdateSlot, 2000);
     return () => clearInterval(interval);
-  }, [events, trendHistory, currentScore, statsSummary]);
+  }, [calculateDimensions]);
 
   // ─── 2. 智慧滾動式時間區間判定（依實際紀錄時間跨度自適應） ───
   const [userSelectedResolution, setUserSelectedResolution] = useState<'auto' | IntervalResolution>('auto');
@@ -260,9 +341,9 @@ export const HealthTrendChart: React.FC<HealthTrendChartProps> = ({
     <div className="bg-[#06080e] border border-slate-800 rounded-md p-3 sm:p-3.5 flex flex-col h-full backdrop-blur-md shadow-xl font-mono cctv-brackets">
       {/* 簡約清晰的標題列（附帶智慧滾動刻度切換） */}
       <div className="flex items-center justify-between pb-2 border-b border-slate-800/80 mb-2.5 gap-2 shrink-0">
-        <div className="flex items-center gap-2">
-          <TrendingUp className="w-4 h-4 text-cyan-400 shrink-0" />
-          <h3 className="text-xs font-bold tracking-wider text-slate-200 uppercase truncate">
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="w-2 h-2 rounded-full bg-[#00d8ff] animate-pulse shadow-[0_0_8px_#00d8ff] shrink-0" />
+          <h3 className="text-xs font-mono font-bold text-[#00d8ff] tracking-wider uppercase truncate">
             [HEALTH_TREND]
           </h3>
         </div>
@@ -339,7 +420,7 @@ export const HealthTrendChart: React.FC<HealthTrendChartProps> = ({
               <span className="text-xs text-slate-500 font-normal ml-1">/100</span>
             </div>
             <div className="text-[10px] text-slate-400 font-sans">
-              {periodicSnapshot.healthScore >= 80 ? '🟢 體徵平穩良好' : periodicSnapshot.healthScore >= 60 ? '🟡 輕度疲勞消耗' : '🔴 過勞臨界警示'}
+              {periodicSnapshot.healthScore >= 80 ? '體徵平穩良好' : periodicSnapshot.healthScore >= 60 ? '輕度疲勞消耗' : '過勞臨界警示'}
             </div>
           </div>
         </div>

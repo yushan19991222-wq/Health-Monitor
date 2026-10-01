@@ -2,13 +2,15 @@ import React, { useState, useEffect } from 'react';
 import {
   Sparkles,
   HeartPulse,
-  Flame,
   Clock,
   Activity,
-  Smile,
-  ShieldCheck,
-  AlertTriangle,
   Zap,
+  Battery,
+  Flame,
+  AlertTriangle,
+  RotateCcw,
+  CheckCircle2,
+  Camera,
 } from 'lucide-react';
 import { EmotionData } from '../types';
 
@@ -22,6 +24,8 @@ interface FloatingHUDProps {
   isClockedOut?: boolean;
   onClockInAgain?: () => void;
   onClockOut?: () => void;
+  onOpenCandidGallery?: () => void;
+  candidCount?: number;
 }
 
 export const FloatingHUD: React.FC<FloatingHUDProps> = ({
@@ -34,6 +38,8 @@ export const FloatingHUD: React.FC<FloatingHUDProps> = ({
   isClockedOut,
   onClockInAgain,
   onClockOut,
+  onOpenCandidGallery,
+  candidCount = 0,
 }) => {
   // Real-time tick for exact off-work chronograph countdown (100ms precision)
   const [now, setNow] = useState<Date>(() => new Date());
@@ -93,66 +99,40 @@ export const FloatingHUD: React.FC<FloatingHUDProps> = ({
   // Dynamic Drain Rate Status
   let drainText = '平穩放電 (1.0x)';
   let drainBadgeColor = 'text-cyan-300 bg-cyan-950/80 border-cyan-500/40';
-  let drainIcon = '⚡';
 
   if (isOvertime) {
     drainText = '超時燃燒 (2.5x)';
     drainBadgeColor = 'text-rose-300 bg-rose-950/80 border-rose-500/60 animate-pulse';
-    drainIcon = '🔥';
   } else if (healthScore < 50) {
     drainText = '重度耗損 (1.8x)';
     drainBadgeColor = 'text-amber-300 bg-amber-950/80 border-amber-500/50';
-    drainIcon = '⚠️';
   } else if (currentEmotion?.primaryEmotion === 'smile' || currentEmotion?.primaryEmotion === 'calm') {
     drainText = '修復回血 (0.4x)';
     drainBadgeColor = 'text-emerald-300 bg-emerald-950/80 border-emerald-500/50';
-    drainIcon = '🔋';
   }
 
   // Determine status & styling with strictly controlled Overwatch palette
-  let statusIcon = '🧘';
-  let statusTitle = '元氣滿滿社畜';
-  let statusDesc = '心態極佳，身心皆在顛峰狀態';
   let statusLevel = 'PRIME';
   let scoreColorClass = 'text-cyan-400';
-  let barColorClass = 'bg-cyan-400';
   let borderAccentClass = 'border-slate-800';
 
   if (healthScore >= 80) {
-    statusIcon = '🧘';
-    statusTitle = '元氣滿滿社畜';
-    statusDesc = '心態極佳，身心皆在顛峰狀態';
     statusLevel = 'NOMINAL';
     scoreColorClass = 'text-cyan-400';
-    barColorClass = 'bg-cyan-400';
     borderAccentClass = 'border-slate-800';
   } else if (healthScore >= 60) {
-    statusIcon = '💼';
-    statusTitle = '穩健打工人';
-    statusDesc = '微量耗損，尚可應付常規專案';
     statusLevel = 'MODERATE';
     scoreColorClass = 'text-cyan-300';
-    barColorClass = 'bg-cyan-400';
     borderAccentClass = 'border-slate-800';
   } else if (healthScore >= 40) {
-    statusIcon = '🥱';
-    statusTitle = '電量低落中';
-    statusDesc = '咖啡因成癮，頻繁打哈欠與眼澀';
     statusLevel = 'ELEVATED';
     scoreColorClass = 'text-amber-400';
-    barColorClass = 'bg-amber-400';
     borderAccentClass = 'border-amber-500/30';
   } else {
-    statusIcon = '💀';
-    statusTitle = '半隻腳已入棺';
-    statusDesc = '生命體徵微弱，急需遞交離職單';
     statusLevel = 'CRITICAL';
     scoreColorClass = 'text-rose-400';
-    barColorClass = 'bg-rose-500';
     borderAccentClass = 'border-rose-500/50';
   }
-
-  const scorePct = Math.min(100, Math.max(0, healthScore));
 
   return (
     <div
@@ -163,19 +143,17 @@ export const FloatingHUD: React.FC<FloatingHUDProps> = ({
           : `bg-[#06080e] ${borderAccentClass} shadow-xl`
       }`}
     >
-      {/* ─────────────────────────────────────────────────────────────
-          HEADER: Dossier Meta
-         ───────────────────────────────────────────────────────────── */}
-      <div className="flex items-center justify-between pb-2 border-b border-slate-800 text-[10px] font-mono">
-        <div className="flex items-center gap-2 text-cyan-400 font-bold tracking-wider">
-          <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse shadow-[0_0_8px_rgba(6,182,212,0.8)]" />
-          <span>[HEALTH_DOSSIER]</span>
+      {/* HEADER: Unified Style */}
+      <div className="flex items-center justify-between pb-2 border-b border-slate-800 text-xs font-mono">
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="w-2 h-2 rounded-full bg-[#00d8ff] animate-pulse shadow-[0_0_8px_#00d8ff] shrink-0" />
+          <span className="text-xs font-mono font-bold text-[#00d8ff] tracking-wider uppercase truncate">
+            [HEALTH_DOSSIER]
+          </span>
         </div>
       </div>
 
-      {/* ─────────────────────────────────────────────────────────────
-          SECTION 1: CORE ACTUARIAL METRICS (Highest Importance)
-         ───────────────────────────────────────────────────────────── */}
+      {/* SECTION 1: CORE ACTUARIAL METRICS */}
       <div className="space-y-2.5">
         {/* Dual Primary Metric Cards */}
         <div className="grid grid-cols-2 gap-2.5">
@@ -186,7 +164,7 @@ export const FloatingHUD: React.FC<FloatingHUDProps> = ({
                 <Sparkles className="w-3 h-3 text-cyan-400 shrink-0" />
                 生理年齡
               </span>
-              <span className="text-[8px] px-1 py-0.2 rounded bg-slate-900 border border-slate-800 text-slate-400">
+              <span className="text-[8px] px-1 py-0.2 rounded bg-slate-900 border border-slate-800 text-slate-400 font-mono">
                 ACTUARY
               </span>
             </div>
@@ -196,12 +174,12 @@ export const FloatingHUD: React.FC<FloatingHUDProps> = ({
                 <span className="text-3xl sm:text-4xl font-black text-white font-mono tracking-tight drop-shadow-[0_0_12px_rgba(255,255,255,0.2)]">
                   {estimatedBodyAge}
                 </span>
-                <span className="text-xs font-mono font-bold text-slate-500">歲</span>
+                <span className="text-xs font-mono font-bold text-slate-400">歲</span>
               </div>
             </div>
 
             <div className="flex items-center justify-between text-[9px] font-mono border-t border-slate-850 pt-1.5 mt-0.5">
-              <span className="text-slate-500">實際: {baseAge} 歲</span>
+              <span className="text-slate-400">實際: {baseAge} 歲</span>
               <span
                 className={`font-bold px-1.5 py-0.2 rounded ${
                   ageDifference > 0
@@ -221,7 +199,7 @@ export const FloatingHUD: React.FC<FloatingHUDProps> = ({
                 <HeartPulse className="w-3 h-3 text-rose-400 shrink-0" />
                 生命力存摺
               </span>
-              <span className="text-[8px] px-1 py-0.2 rounded bg-slate-900 border border-slate-800 text-slate-400">
+              <span className="text-[8px] px-1 py-0.2 rounded bg-slate-900 border border-slate-800 text-slate-400 font-mono">
                 BALANCE
               </span>
             </div>
@@ -231,12 +209,12 @@ export const FloatingHUD: React.FC<FloatingHUDProps> = ({
                 <span className={`text-3xl sm:text-4xl font-black tracking-tight ${scoreColorClass} drop-shadow-[0_0_12px_rgba(6,182,212,0.3)]`}>
                   {healthScore}
                 </span>
-                <span className="text-xs text-slate-500 font-bold">/ 100</span>
+                <span className="text-xs text-slate-400 font-bold">/ 100</span>
               </div>
             </div>
 
             <div className="flex items-center justify-between text-[9px] font-mono border-t border-slate-850 pt-1.5 mt-0.5">
-              <span className="text-slate-500">狀態等級</span>
+              <span className="text-slate-400">狀態等級</span>
               <span
                 className={`font-bold px-1.5 py-0.2 rounded ${
                   healthScore >= 80
@@ -259,8 +237,7 @@ export const FloatingHUD: React.FC<FloatingHUDProps> = ({
               <Zap className="w-3 h-3 text-cyan-400 shrink-0" />
               <span>人體電池與續航</span>
             </span>
-            <span className={`text-[8px] font-bold px-1.5 py-0.2 rounded border ${drainBadgeColor} flex items-center gap-1`}>
-              <span>{drainIcon}</span>
+            <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded border ${drainBadgeColor} flex items-center gap-1`}>
               <span>{drainText}</span>
             </span>
           </div>
@@ -286,11 +263,11 @@ export const FloatingHUD: React.FC<FloatingHUDProps> = ({
 
           {/* Battery Status & Estimated Endurance */}
           <div className="flex items-center justify-between text-[9px] text-slate-400 pt-0.5">
-            <span className="text-slate-500">
-              殘電: <span className={`font-bold font-mono ${batteryPct < 50 ? 'text-rose-400' : 'text-cyan-300'}`}>{batteryPct}%</span>
+            <span className="text-slate-400">
+              電量: <span className={`font-bold font-mono ${batteryPct < 50 ? 'text-rose-400' : 'text-cyan-300'}`}>{batteryPct}%</span>
             </span>
             <span className="text-slate-300 font-mono font-bold flex items-center gap-1">
-              <Clock className="w-2.5 h-2.5 text-slate-500" />
+              <Clock className="w-2.5 h-2.5 text-slate-400" />
               <span>預估專注續航:</span>
               <span className="text-cyan-300 text-[10px] font-black font-mono">~{estFocusHours}h</span>
             </span>
@@ -298,10 +275,8 @@ export const FloatingHUD: React.FC<FloatingHUDProps> = ({
         </div>
       </div>
 
-      {/* ─────────────────────────────────────────────────────────────
-          SECTION 2: FREEDOM CHRONO STOPWATCH (下班自由倒數戰術碼表)
-         ───────────────────────────────────────────────────────────── */}
-      <div className="space-y-2 font-mono">
+      {/* SECTION 2: FREEDOM CHRONO STOPWATCH */}
+      <div className="font-mono border-none pt-0">
         {/* High-Tension Tactical Stopwatch Card */}
         <div
           className={`p-3 rounded-lg bg-[#020408] border-none relative overflow-hidden flex flex-col justify-between gap-2.5 transition-all ${
@@ -314,10 +289,10 @@ export const FloatingHUD: React.FC<FloatingHUDProps> = ({
           <div className="absolute inset-0 bg-[linear-gradient(rgba(6,182,212,0)_50%,rgba(0,0,0,0.35)_50%)] bg-[length:100%_4px] opacity-25 pointer-events-none" />
 
           {/* Top Status Strip */}
-          <div className="flex items-center justify-between z-10">
-            <div className="flex items-center gap-1.5">
+          <div className="flex items-center justify-between z-10 gap-2">
+            <div className="flex items-center gap-1.5 min-w-0">
               <span
-                className={`w-2 h-2 rounded-full ${
+                className={`w-2 h-2 rounded-full shrink-0 ${
                   isClockedOut
                     ? 'bg-emerald-400 animate-pulse shadow-[0_0_6px_#10b981]'
                     : isOverdue || isOvertime
@@ -325,8 +300,8 @@ export const FloatingHUD: React.FC<FloatingHUDProps> = ({
                     : 'bg-cyan-400 animate-pulse shadow-[0_0_6px_#06b6d4]'
                 }`}
               />
-              <span className={`text-[11px] font-bold tracking-wider ${isClockedOut ? 'text-emerald-300' : 'text-slate-200'}`}>
-                {isClockedOut ? '已打卡下班 🌙' : isOverdue || isOvertime ? '超時無償加班中 🔥' : '下班自由碼表'}
+              <span className={`text-[11px] font-bold tracking-wider truncate ${isClockedOut ? 'text-emerald-300' : 'text-slate-200'}`}>
+                {isClockedOut ? '已打卡下班' : isOverdue || isOvertime ? '超時無償加班中' : '下班倒數碼表'}
               </span>
             </div>
 
@@ -335,17 +310,9 @@ export const FloatingHUD: React.FC<FloatingHUDProps> = ({
                 <button
                   onClick={onClockInAgain}
                   className="px-2 py-0.5 rounded bg-emerald-950/80 hover:bg-emerald-900 border border-emerald-500/60 text-emerald-300 hover:text-white text-[9px] font-bold transition shrink-0 cursor-pointer flex items-center gap-1 shadow-[0_0_8px_rgba(16,185,129,0.3)]"
-                  title="重新啟動守護者下班碼表"
+                  title="重新啟動下班碼表"
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
-                    className="w-3 h-3 text-emerald-300 shrink-0"
-                    aria-hidden="true"
-                  >
-                    <path d="M12 5V2L8 6l4 4V7c3.31 0 6 2.69 6 6 0 2.97-2.16 5.44-5 5.92v2.02c3.95-.49 7-3.85 7-7.94 0-4.42-3.58-8-8-8zm-6 8c0-1.65.67-3.15 1.76-4.24L6.34 7.34C4.9 8.79 4 10.79 4 13c0 4.09 3.05 7.45 7 7.94v-2.02c-2.84-.48-5-2.95-5-5.92z" />
-                  </svg>
+                  <RotateCcw className="w-3 h-3 text-emerald-300 shrink-0" />
                   <span>重新上班</span>
                 </button>
               )
@@ -355,18 +322,29 @@ export const FloatingHUD: React.FC<FloatingHUDProps> = ({
                 className="px-2.5 py-0.5 rounded bg-rose-600 hover:bg-rose-500 text-white text-[9px] font-bold transition shrink-0 cursor-pointer flex items-center gap-1 shadow-[0_0_12px_rgba(244,63,94,0.6)] animate-pulse border border-rose-400"
                 title="立即打卡下班並領取結算收據"
               >
-                <span>🏁</span>
                 <span>打卡下班</span>
               </button>
             ) : (
+              /* 過勞風險 Tag: Replaces [COUNTDOWN] */
               <span
-                className={`text-[8px] font-bold px-1.5 py-0.2 rounded border tracking-wider uppercase ${
-                  isOverdue || isOvertime
-                    ? 'bg-rose-950/90 text-rose-300 border-rose-500/70 animate-pulse'
-                    : 'bg-cyan-950/90 text-cyan-300 border-cyan-500/50'
+                className={`text-[8px] font-bold px-1.5 py-0.5 rounded border tracking-wider uppercase flex items-center gap-1 shrink-0 ${
+                  healthScore >= 80
+                    ? 'bg-cyan-950/90 text-cyan-300 border-cyan-500/50'
+                    : healthScore >= 50
+                    ? 'bg-amber-950/90 text-amber-300 border-amber-500/50'
+                    : 'bg-rose-950/90 text-rose-300 border-rose-500/70 animate-pulse'
                 }`}
               >
-                [FREEDOM_CLOCK]
+                <span
+                  className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                    healthScore >= 80
+                      ? 'bg-cyan-400'
+                      : healthScore >= 50
+                      ? 'bg-amber-400'
+                      : 'bg-rose-500 animate-ping'
+                  }`}
+                />
+                <span>過勞風險: {healthScore >= 80 ? 'LOW' : healthScore >= 50 ? 'MED' : 'CRIT'}</span>
               </span>
             )}
           </div>
@@ -386,10 +364,10 @@ export const FloatingHUD: React.FC<FloatingHUDProps> = ({
                   {hoursStr}
                 </span>
               </div>
-              <span className="text-[7px] text-slate-500 uppercase tracking-widest mt-0.5">HRS</span>
+              <span className="text-[7px] text-slate-400 uppercase tracking-widest mt-0.5">HRS</span>
             </div>
 
-            <span className="text-xl font-bold text-slate-600 mb-2 animate-pulse">:</span>
+            <span className="text-xl font-bold text-slate-500 mb-2 animate-pulse">:</span>
 
             {/* Minutes Block */}
             <div className="flex flex-col items-center">
@@ -404,10 +382,10 @@ export const FloatingHUD: React.FC<FloatingHUDProps> = ({
                   {minsStr}
                 </span>
               </div>
-              <span className="text-[7px] text-slate-500 uppercase tracking-widest mt-0.5">MIN</span>
+              <span className="text-[7px] text-slate-400 uppercase tracking-widest mt-0.5">MIN</span>
             </div>
 
-            <span className="text-xl font-bold text-slate-600 mb-2 animate-pulse">:</span>
+            <span className="text-xl font-bold text-slate-500 mb-2 animate-pulse">:</span>
 
             {/* Seconds Block */}
             <div className="flex flex-col items-center">
@@ -422,7 +400,7 @@ export const FloatingHUD: React.FC<FloatingHUDProps> = ({
                   {secsStr}
                 </span>
               </div>
-              <span className="text-[7px] text-slate-500 uppercase tracking-widest mt-0.5">SEC</span>
+              <span className="text-[7px] text-slate-400 uppercase tracking-widest mt-0.5">SEC</span>
             </div>
 
             {/* Milliseconds Fraction */}
@@ -432,44 +410,42 @@ export const FloatingHUD: React.FC<FloatingHUDProps> = ({
                   .{msStr}
                 </span>
               </div>
-              <span className="text-[7px] text-slate-500 uppercase tracking-widest mt-0.5">MS</span>
+              <span className="text-[7px] text-slate-400 uppercase tracking-widest mt-0.5">MS</span>
             </div>
           </div>
 
-          {/* Bottom Telemetry Specs Strip */}
-          <div className="mt-2 pt-0 border-none grid grid-cols-2 gap-2 text-[10px] font-mono">
-            <div className="flex items-center justify-between bg-[#030508] px-2.5 py-1.5 rounded border border-slate-800/80 shadow-sm">
-              <div className="flex items-center gap-1.5 text-slate-400">
-                <span className="w-1.5 h-1.5 rounded-full bg-cyan-400/80 shrink-0" />
-                <span className="text-[9px] uppercase tracking-wider text-slate-400 font-bold">下班目標</span>
+          {/* Bottom Action: Candid Gallery Album Button (Replaces 下班目標 and 過勞風險) */}
+          {onOpenCandidGallery && (
+            <button
+              onClick={onOpenCandidGallery}
+              className="w-full bg-[#030508] hover:bg-cyan-950/30 px-3 py-2 rounded-md border border-slate-800 hover:border-cyan-500/60 transition cursor-pointer flex items-center justify-between group shadow-sm font-mono text-left"
+              title="檢視工位抓拍紀錄存證"
+            >
+              <div className="flex items-center gap-2 min-w-0">
+                <div className="w-6 h-6 rounded bg-slate-900 border border-slate-800 flex items-center justify-center group-hover:border-cyan-500/50 transition shrink-0">
+                  <Camera className="w-3.5 h-3.5 text-cyan-400 group-hover:scale-110 transition-transform" />
+                </div>
+                <div className="flex flex-col min-w-0">
+                  <span className="text-[11px] font-bold text-slate-200 group-hover:text-cyan-300 transition-colors truncate">
+                    工位相簿
+                  </span>
+                  <span className="text-[8px] text-slate-400 truncate">
+                    檢視工位野生瞬間與警報紀錄存證
+                  </span>
+                </div>
               </div>
-              <span className="font-bold text-slate-200">{offWorkTime}</span>
-            </div>
 
-            <div className="flex items-center justify-between bg-[#030508] px-2.5 py-1.5 rounded border border-slate-800/80 shadow-sm">
-              <div className="flex items-center gap-1.5 text-slate-400">
-                <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${
-                  healthScore >= 80 ? 'bg-cyan-400' : healthScore >= 50 ? 'bg-amber-400' : 'bg-rose-500 animate-ping'
-                }`} />
-                <span className="text-[9px] uppercase tracking-wider text-slate-400 font-bold">過勞風險</span>
+              <div className="flex items-center gap-1.5 shrink-0 pl-2">
+                <span className="text-[10px] font-bold font-mono text-cyan-400">
+                  {candidCount > 0 ? `${candidCount} 張` : '0 張'}
+                </span>
+                <span className="text-slate-500 text-xs group-hover:translate-x-0.5 transition-transform">→</span>
               </div>
-              <span
-                className={`font-bold ${
-                  healthScore >= 80
-                    ? 'text-cyan-400'
-                    : healthScore >= 50
-                    ? 'text-amber-400'
-                    : 'text-rose-400 animate-pulse'
-                }`}
-              >
-                {healthScore >= 80 ? 'LOW (安全)' : healthScore >= 50 ? 'MEDIUM' : 'CRITICAL'}
-              </span>
-            </div>
-          </div>
+            </button>
+          )}
         </div>
       </div>
 
     </div>
   );
 };
-

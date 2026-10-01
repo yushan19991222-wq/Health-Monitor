@@ -19,7 +19,7 @@ const TITLES_AND_COMMENTS = [
     minScore: 92,
     rank: 'SSS' as const,
     title: 'K-POP 滿血社畜神顏 🌸',
-    tag: 'MAX_DOPAMINE_CENTER',
+    tag: '滿血氣色',
     comments: [
       '嘴角弧度完美上揚、雙眼晶亮透澈！零班味且能量滿載，如同韓團 C 位！',
       '無懈可擊的元氣光彩！眉頭舒展且神采飛揚，整個辦公室都因你而放晴！',
@@ -30,7 +30,7 @@ const TITLES_AND_COMMENTS = [
     minScore: 84,
     rank: 'SS' as const,
     title: '高智感元氣職場高光 ✨',
-    tag: 'METAVERSE_MODEL',
+    tag: '高光氣色',
     comments: [
       '嘴型帶有些許微笑弧度，雙眼炯炯有神！沉穩自信中帶有強烈感染力！',
       '專注度與神采完美平衡，眼神電力足夠，散發幹練菁英氣場！',
@@ -41,7 +41,7 @@ const TITLES_AND_COMMENTS = [
     minScore: 75,
     rank: 'S' as const,
     title: '頂級專注職場菁英態 💼',
-    tag: 'ELITE_PROFESSIONAL',
+    tag: '專注狀態',
     comments: [
       '專注自律，神采奕奕！眉頭舒展且散發從容自信的職場氣場！',
       '神情沉穩自信，雙眼明亮有力，充分展現頂級專注力與工作魅力！',
@@ -52,7 +52,7 @@ const TITLES_AND_COMMENTS = [
     minScore: 68,
     rank: 'A' as const,
     title: '穩健工位標準姿態 👔',
-    tag: 'STABLE_WORKER',
+    tag: '標準姿態',
     comments: [
       '狀態平穩專注，表情略為平靜，雖有正常辦公節奏但展現可靠態度！',
       '面部表情略顯嚴肅，建議嘴角適度放鬆並喝口溫水，顏值將即刻飆升！',
@@ -63,7 +63,7 @@ const TITLES_AND_COMMENTS = [
     minScore: 52,
     rank: 'B' as const,
     title: '微帶班味 // 輕微疲態現形 ☕',
-    tag: 'MILD_FATIGUE',
+    tag: '輕微班味',
     comments: [
       '嘴角趨於平淡、眼神稍顯疲累，50幾分展現真實社畜打拼痕跡！',
       '班味開始浮現，雙眼微感乾澀，建議立即大口喝水補水提提神！',
@@ -74,7 +74,7 @@ const TITLES_AND_COMMENTS = [
     minScore: 36,
     rank: 'C' as const,
     title: '班味超載 // 靈魂輕度飄離 😮‍💨',
-    tag: 'FATIGUE_OVERLOAD',
+    tag: '班味超載',
     comments: [
       '嘴型下垂平淡、雙眼睜眼弧度不足！累積打哈欠與久坐，班味明顯超標！',
       '眼神露出明顯疲態，急需離座喝水補充水分與做伸展操！',
@@ -85,7 +85,7 @@ const TITLES_AND_COMMENTS = [
     minScore: 15,
     rank: 'D' as const,
     title: '重度過勞 // 靈魂徹底出竅 💀',
-    tag: 'BURNOUT_CRITICAL',
+    tag: '重度過勞',
     comments: [
       '緊急危險！雙眼極度沉重半閉、頻繁打哈欠與久坐，靈魂已脫離肉體！',
       '喪失感與過勞感爆表！請立即站起來喝水、走動，挽救飄走的靈魂！',

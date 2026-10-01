@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Settings, Volume2, VolumeX, Clock, Calendar, Armchair, Bell, BellOff, MessageSquare, AppWindow, X } from 'lucide-react';
+import { Settings, Volume2, VolumeX, Clock, Calendar, Armchair, Droplets, Bell, BellOff, MessageSquare, AppWindow, X } from 'lucide-react';
 import { GuardianSettings } from '../types';
 import { requestNotificationPermission, isNotificationSupported } from '../utils/crossTabAlert';
 
@@ -20,6 +20,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const [offWorkTime, setOffWorkTime] = useState(settings.offWorkTime);
   const [sedentaryLimitMinutes, setSedentaryLimitMinutes] = useState(
     settings.sedentaryLimitMinutes
+  );
+  const [hydrationIntervalMinutes, setHydrationIntervalMinutes] = useState(
+    settings.hydrationIntervalMinutes ?? 60
   );
   const [soundEnabled, setSoundEnabled] = useState(settings.soundEnabled);
   const [desktopNotificationsEnabled, setDesktopNotificationsEnabled] = useState(
@@ -62,6 +65,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       baseAge: Number(baseAge) || 25,
       offWorkTime: offWorkTime || '17:30',
       sedentaryLimitMinutes: Number(sedentaryLimitMinutes) || 45,
+      hydrationIntervalMinutes: Number(hydrationIntervalMinutes) || 60,
       soundEnabled,
       desktopNotificationsEnabled,
       voiceAlertsEnabled,
@@ -72,16 +76,17 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   return (
     <div
       id="settings-modal"
-      className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200 font-mono"
+      className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-200 font-mono"
     >
-      <div className="bg-[#0b101b] border border-slate-700 max-w-md w-full p-5 rounded-md shadow-2xl relative cctv-brackets">
-        <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-800">
+      <div className="bg-[#0b101b] border border-slate-700 max-w-md w-full max-h-[calc(100dvh-2.5rem)] sm:max-h-[calc(100dvh-4rem)] rounded-md shadow-2xl relative cctv-brackets flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+        {/* Pinned Header */}
+        <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-800 shrink-0 bg-[#080d17]/90">
           <div className="flex items-center gap-2">
             <div className="p-1.5 bg-slate-900 border border-slate-700 rounded text-cyan-400">
               <Settings className="w-4 h-4" />
             </div>
             <h3 className="text-sm font-bold text-slate-100 tracking-wider uppercase">
-              [SYS_CONFIG // CALIBRATION]
+              [SYS_CONFIG]
             </h3>
           </div>
           <button
@@ -94,12 +99,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           </button>
         </div>
 
-        <div className="space-y-4 text-xs">
+        {/* Flexible Scrollable Body */}
+        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4 text-xs custom-scrollbar">
           {/* Base Age */}
           <div>
             <label className="flex items-center gap-1.5 font-bold text-slate-300 mb-1">
               <Calendar className="w-3.5 h-3.5 text-cyan-400" />
-              <span>PARAM: BASE_AGE (生理基礎年齡)</span>
+              <span>BASE_AGE (生理基礎年齡)</span>
             </label>
             <input
               type="number"
@@ -109,16 +115,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               onChange={(e) => setBaseAge(Number(e.target.value))}
               className="w-full bg-[#06090f] border border-slate-800 rounded px-3 py-2 text-slate-100 font-mono focus:outline-none focus:border-cyan-400 transition text-xs"
             />
-            <p className="text-[10px] text-slate-500 mt-1">
-              計算公式: BASE_AGE + (100 - CURRENT_SCORE) * 0.8
-            </p>
           </div>
 
           {/* Off Work Time */}
           <div>
             <label className="flex items-center gap-1.5 font-bold text-slate-300 mb-1">
               <Clock className="w-3.5 h-3.5 text-rose-400" />
-              <span>PARAM: SHIFT_END (表定下班時間)</span>
+              <span>SHIFT_END (表定下班時間)</span>
             </label>
             <input
               type="time"
@@ -126,16 +129,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               onChange={(e) => setOffWorkTime(e.target.value)}
               className="w-full bg-[#06090f] border border-slate-800 rounded px-3 py-2 text-slate-100 font-mono focus:outline-none focus:border-cyan-400 transition text-xs"
             />
-            <p className="text-[10px] text-slate-500 mt-1">
-              超過此時間且人臉在位，觸發 OVERTIME_DRAIN 扣分程序
-            </p>
           </div>
 
           {/* Sedentary Limit */}
           <div>
             <label className="flex items-center gap-1.5 font-bold text-slate-300 mb-1">
               <Armchair className="w-3.5 h-3.5 text-amber-400" />
-              <span>PARAM: SEDENTARY_LIMIT (久坐上限/分鐘)</span>
+              <span>SEDENTARY_LIMIT (久坐上限/分鐘)</span>
             </label>
             <input
               type="number"
@@ -145,9 +145,22 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               onChange={(e) => setSedentaryLimitMinutes(Number(e.target.value))}
               className="w-full bg-[#06090f] border border-slate-800 rounded px-3 py-2 text-slate-100 font-mono focus:outline-none focus:border-cyan-400 transition text-xs"
             />
-            <p className="text-[10px] text-slate-500 mt-1">
-              連續久坐達標即啟動全螢幕離座鎖定
-            </p>
+          </div>
+
+          {/* Hydration Interval */}
+          <div>
+            <label className="flex items-center gap-1.5 font-bold text-slate-300 mb-1">
+              <Droplets className="w-3.5 h-3.5 text-cyan-400" />
+              <span>HYDRATION_INTERVAL (喝水提醒間隔/分鐘)</span>
+            </label>
+            <input
+              type="number"
+              min="5"
+              max="240"
+              value={hydrationIntervalMinutes}
+              onChange={(e) => setHydrationIntervalMinutes(Number(e.target.value))}
+              className="w-full bg-[#06090f] border border-slate-800 rounded px-3 py-2 text-slate-100 font-mono focus:outline-none focus:border-cyan-400 transition text-xs"
+            />
           </div>
 
           {/* Sound Toggle */}
@@ -178,15 +191,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             <button
               type="button"
               onClick={async () => {
-                if (!desktopNotificationsEnabled && isNotificationSupported()) {
-                  const perm = await requestNotificationPermission();
-                  if (perm === 'granted') {
-                    setDesktopNotificationsEnabled(true);
-                  } else {
-                    setDesktopNotificationsEnabled(false);
+                const nextState = !desktopNotificationsEnabled;
+                setDesktopNotificationsEnabled(nextState);
+                if (nextState && isNotificationSupported()) {
+                  try {
+                    await requestNotificationPermission();
+                  } catch (err) {
+                    console.warn('Failed to request notification permission:', err);
                   }
-                } else {
-                  setDesktopNotificationsEnabled(!desktopNotificationsEnabled);
                 }
               }}
               className={`p-2 rounded-md border transition-all cursor-pointer ${
@@ -219,7 +231,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           </div>
         </div>
 
-        <div className="mt-5 pt-3 border-t border-slate-800 flex items-center justify-end gap-2">
+        {/* Pinned Footer */}
+        <div className="px-5 py-3 border-t border-slate-800 flex items-center justify-end gap-2 shrink-0 bg-[#080d17]/90">
           <button
             type="button"
             onClick={onClose}

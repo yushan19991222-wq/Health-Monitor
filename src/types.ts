@@ -60,6 +60,7 @@ export interface GuardianSettings {
   baseAge: number;
   offWorkTime: string;
   sedentaryLimitMinutes: number;
+  hydrationIntervalMinutes?: number;
   soundEnabled: boolean;
   desktopNotificationsEnabled: boolean;
   voiceAlertsEnabled: boolean;

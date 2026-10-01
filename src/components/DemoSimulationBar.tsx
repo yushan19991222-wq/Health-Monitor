@@ -23,7 +23,7 @@ export const DemoSimulationBar: React.FC<DemoSimulationBarProps> = ({
 }) => {
   return (
     <div className="p-2.5 sm:p-3 rounded-md bg-[#06080e] border border-slate-800 backdrop-blur-md flex flex-col gap-2.5 text-xs font-mono">
-      <div className="flex items-center justify-between border-b border-slate-850/80 pb-1.5">
+      <div className="flex items-center justify-between border-b border-solid border-slate-800/80 pb-2 mb-2.5">
         <div className="flex items-center gap-1.5 text-white font-bold shrink-0">
           <span className="material-symbols-outlined text-[15px] text-cyan-400 shrink-0">tune</span>
           <span className="text-[11px] text-white tracking-wider font-bold">[OVERRIDE_BENCH]</span>

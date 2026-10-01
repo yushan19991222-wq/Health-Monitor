@@ -224,17 +224,6 @@ export const EyeStrainBlurOverlay: React.FC<EyeStrainBlurOverlayProps> = ({
             <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-current shadow-[0_0_8px_currentColor] shrink-0" />
             <span className="truncate">&gt; OVERWATCH // INTERCEPT</span>
           </div>
-          <span className="hidden md:inline text-slate-400 text-[10px] sm:text-[11px] tracking-wide truncate">
-            {isCompleted
-              ? '> STATUS: CALIBRATION_COMPLETE // 視距校準成功'
-              : !currentFacePresent
-              ? '> WARNING: FACE_OFFLINE // 請面向鏡頭並拉開距離'
-              : isSafe
-              ? '> STATUS: OPTIMAL_DISTANCE // 最佳姿勢維持中'
-              : isWarning
-              ? `> STATUS: TRANSITION_ZONE // 過渡區 (當前 ${currentCm} cm，請稍微後靠至 ≥ 35cm)`
-              : `> ALERT: PROXIMITY_VIOLATION // 當前距離 ${currentCm} cm (過近！需 ≥ 35cm)`}
-          </span>
         </div>
 
         <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
@@ -290,8 +279,8 @@ export const EyeStrainBlurOverlay: React.FC<EyeStrainBlurOverlayProps> = ({
           <div className="flex items-center justify-between border-b border-white/10 pb-3 mb-3 w-full text-xs shrink-0 relative z-20">
             <div className="flex items-center gap-2">
               <Radio className="w-4 h-4 animate-pulse" style={{ color: statusColor }} />
-              <span className="font-black text-white tracking-wider uppercase text-xs sm:text-sm font-mono">
-                [OPTICAL_RANGE_FINDER] // 護眼視距雷達校準
+              <span className="font-semibold text-white tracking-wide text-sm sm:text-base font-sans">
+                護眼視距雷達
               </span>
             </div>
             <div
@@ -303,14 +292,14 @@ export const EyeStrainBlurOverlay: React.FC<EyeStrainBlurOverlayProps> = ({
               }}
             >
               {isCompleted
-                ? 'LOCKED_SUCCESS'
+                ? '校準完成'
                 : !currentFacePresent
-                ? 'FACE_NOT_DETECTED'
+                ? '未感應到人臉'
                 : isSafe
-                ? 'OPTIMAL_SAFE_ZONE (≥35cm)'
+                ? '最佳距離 (≥35cm)'
                 : isWarning
-                ? 'TRANSITION_ZONE (30-35cm)'
-                : 'TOO_CLOSE_DANGER (<30cm)'}
+                ? '過渡距離 (30-35cm)'
+                : '距離過近 (<30cm)'}
             </div>
           </div>
 
@@ -625,7 +614,6 @@ export const EyeStrainBlurOverlay: React.FC<EyeStrainBlurOverlayProps> = ({
       <footer className="relative z-10 w-full pt-1.5 border-t border-white/10 flex items-center justify-between text-[9px] sm:text-[10px] text-slate-500 shrink-0">
         <div className="flex items-center gap-2">
           <span className="text-[#00d8ff] font-bold">[OVERWATCH // OPTICAL_SAFEGUARD]</span>
-          <span className="hidden md:inline">20-20-20 原則：每 20 分鐘遠眺 20 英呎（6 公尺）20 秒</span>
         </div>
 
         <div className="flex items-center gap-2 font-mono">

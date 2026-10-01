@@ -248,7 +248,7 @@ export const CameraFeed: React.FC<CameraFeedProps> = ({
               <div className="flex-1 text-center sm:text-left min-w-0">
                 <div className="flex items-center justify-center sm:justify-start gap-1.5 text-[10px] font-mono font-bold text-cyan-400 uppercase tracking-wider mb-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
-                  <span>[SENTRY_CAT // 戰術小貓已就位]</span>
+                  <span>[SENTRY_CAT]</span>
                 </div>
                 <h3 className="text-xs sm:text-sm font-bold text-slate-100 mb-1 font-mono">
                   「本喵正在盯著你的脊椎與坐姿！」
@@ -310,8 +310,7 @@ export const CameraFeed: React.FC<CameraFeedProps> = ({
               style={{ width: `${Math.min(100, telemetry.mar * 180)}%` }}
             />
           </div>
-          <div className="text-[9px] text-slate-500 mt-1 flex justify-between items-center">
-            <span className="text-[8px] px-1 py-0.2 rounded bg-cyan-950/60 border border-cyan-500/30 text-cyan-300">缺氧監測</span>
+          <div className="text-[9px] text-slate-400 mt-1 flex justify-end items-center">
             <span className={telemetry.mar > 0.48 ? 'text-rose-400 font-bold' : 'text-slate-400'}>
               {telemetry.mar > 0.48 ? '缺氧超標' : '警戒線:0.48'}
             </span>
@@ -319,28 +318,27 @@ export const CameraFeed: React.FC<CameraFeedProps> = ({
         </div>
 
         {/* 2. Stress Level */}
-        <div className="p-2.5 rounded bg-[#070a10] border border-slate-800 flex flex-col justify-between" title="【精神緊繃壓力監測】眉心張力超過 0.10 且持續 3.0 秒將判定為壓力緊繃並觸發心靈排解提醒">
+        <div className="p-2.5 rounded bg-[#070a10] border border-slate-800 flex flex-col justify-between" title="【精神緊繃壓力監測】眉心張力超過 0.05 且持續 1.5 秒將判定為壓力緊繃並觸發心靈排解提醒">
           <div className="flex items-center justify-between text-[10px] text-slate-400 mb-1">
             <span className="flex items-center gap-1.5 text-slate-300 font-bold truncate">
               <span className="material-symbols-outlined text-[15px] text-cyan-400 shrink-0">psychology</span>
               <span>STRESS LEVEL</span>
             </span>
-            <span className={`font-bold shrink-0 ${telemetry.frown >= 0.10 ? 'text-amber-400' : 'text-cyan-400'}`}>
+            <span className={`font-bold shrink-0 ${telemetry.frown >= 0.05 ? 'text-amber-400' : 'text-cyan-400'}`}>
               {telemetry.frown.toFixed(2)}
             </span>
           </div>
           <div className="w-full bg-[#030508] h-1.5 rounded-sm overflow-hidden border border-slate-800">
             <div
               className={`h-full transition-all duration-75 ${
-                telemetry.frown >= 0.10 ? 'bg-amber-400 shadow-[0_0_6px_#fbbf24]' : 'bg-cyan-400'
+                telemetry.frown >= 0.05 ? 'bg-amber-400 shadow-[0_0_6px_#fbbf24]' : 'bg-cyan-400'
               }`}
-              style={{ width: `${Math.min(100, (telemetry.frown / 0.15) * 100)}%` }}
+              style={{ width: `${Math.min(100, (telemetry.frown / 0.08) * 100)}%` }}
             />
           </div>
-          <div className="text-[9px] text-slate-500 mt-1 flex justify-between items-center">
-            <span className="text-[8px] px-1 py-0.2 rounded bg-cyan-950/60 border border-cyan-500/30 text-cyan-300">張力整合</span>
-            <span className={telemetry.frown >= 0.10 ? 'text-amber-400 font-bold' : 'text-slate-400'}>
-              {telemetry.frown >= 0.10 ? '緊繃警戒 (≥0.10)' : '警戒線: 0.10'}
+          <div className="text-[9px] text-slate-400 mt-1 flex justify-end items-center">
+            <span className={telemetry.frown >= 0.05 ? 'text-amber-400 font-bold' : 'text-slate-400'}>
+              {telemetry.frown >= 0.05 ? '緊繃警戒 (≥0.05)' : '警戒線: 0.05'}
             </span>
           </div>
         </div>
@@ -378,8 +376,7 @@ export const CameraFeed: React.FC<CameraFeedProps> = ({
               }}
             />
           </div>
-          <div className="text-[9px] text-slate-500 mt-1 flex justify-between items-center">
-            <span className="text-[8px] px-1 py-0.2 rounded bg-cyan-950/60 border border-cyan-500/30 text-cyan-300">4s窗口頻率</span>
+          <div className="text-[9px] text-slate-400 mt-1 flex justify-end items-center">
             <span className={telemetry.isFrequentBlinking ? 'text-rose-400 font-bold' : 'text-slate-400'}>
               {telemetry.isFrequentBlinking ? '乾眼過勞 (≥5次)' : `${telemetry.blinkCountWindow || 0} / 5 次`}
             </span>
@@ -407,8 +404,7 @@ export const CameraFeed: React.FC<CameraFeedProps> = ({
               style={{ width: `${Math.min(100, telemetry.proximity)}%` }}
             />
           </div>
-          <div className="text-[9px] text-slate-500 mt-1 flex justify-between items-center">
-            <span className="text-[8px] px-1 py-0.2 rounded bg-cyan-950/60 border border-cyan-500/30 text-cyan-300">視距姿態</span>
+          <div className="text-[9px] text-slate-400 mt-1 flex justify-end items-center">
             <span className={
               telemetry.proximity > 64
                 ? 'text-rose-400 font-bold'
@@ -438,8 +434,7 @@ export const CameraFeed: React.FC<CameraFeedProps> = ({
               style={{ width: `${deskProgressPct}%` }}
             />
           </div>
-          <div className="text-[9px] text-slate-500 mt-1 flex justify-between items-center">
-            <span className="text-[8px] px-1 py-0.2 rounded bg-emerald-950/60 border border-emerald-500/40 text-emerald-300">連續伏案進度</span>
+          <div className="text-[9px] text-slate-400 mt-1 flex justify-end items-center">
             <span className={deskProgressPct > 85 ? 'text-rose-400 font-bold' : 'text-slate-400'}>
               {Math.round(deskProgressPct)}% / {sedentaryLimitMinutes}m
             </span>
@@ -479,8 +474,7 @@ export const CameraFeed: React.FC<CameraFeedProps> = ({
               }}
             />
           </div>
-          <div className="text-[9px] text-slate-500 mt-1 flex justify-between items-center">
-            <span className="text-[8px] px-1 py-0.2 rounded bg-cyan-950/60 border border-cyan-500/30 text-cyan-300">心靈能量</span>
+          <div className="text-[9px] text-slate-400 mt-1 flex justify-end items-center">
             <span className="text-cyan-400 font-bold">
               {telemetry.isFacePresent && telemetry.emotion
                 ? `${telemetry.emotion.score}%`

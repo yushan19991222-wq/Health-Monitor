@@ -27,19 +27,20 @@ export const ActivityLogView: React.FC<ActivityLogViewProps> = ({ events, onClea
 
   return (
     <div className="bg-[#06080e] border border-slate-800 rounded-md p-3.5 flex flex-col h-full min-h-[360px] max-h-full overflow-hidden backdrop-blur-md shadow-xl font-mono cctv-brackets">
+      {/* Unified Block Header */}
       <div className="flex items-center justify-between pb-2 border-b border-slate-800 mb-2.5 shrink-0">
-        <div className="flex items-center gap-2">
-          <Terminal className="w-3.5 h-3.5 text-cyan-400" />
-          <h3 className="text-[11px] font-bold tracking-wider text-slate-300 uppercase">
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="w-2 h-2 rounded-full bg-[#00d8ff] animate-pulse shadow-[0_0_8px_#00d8ff] shrink-0" />
+          <h3 className="text-xs font-mono font-bold text-[#00d8ff] tracking-wider uppercase truncate">
             [SURVEILLANCE_LOG]
           </h3>
-          <span className="text-[9px] px-1.5 py-0.2 rounded bg-black/60 border border-slate-800 text-slate-500">
+          <span className="text-[9px] px-1.5 py-0.2 rounded bg-black/60 border border-slate-800 text-slate-400 font-bold">
             {events.length} 筆
           </span>
         </div>
         <button
           onClick={onClear}
-          className="text-[9px] text-slate-500 hover:text-slate-200 flex items-center gap-1 transition px-1.5 py-0.5 rounded border border-slate-800 hover:border-slate-700 bg-black/40 cursor-pointer"
+          className="text-[9px] text-slate-400 hover:text-slate-100 flex items-center gap-1 transition px-1.5 py-0.5 rounded border border-slate-800 hover:border-slate-700 bg-black/40 cursor-pointer"
         >
           <Trash2 className="w-2.5 h-2.5" />
           <span>清除紀錄</span>
@@ -51,14 +52,14 @@ export const ActivityLogView: React.FC<ActivityLogViewProps> = ({ events, onClea
         className="flex-1 min-h-0 overflow-y-auto space-y-1.5 pr-1.5 text-xs custom-scrollbar"
       >
         {events.length === 0 ? (
-          <div className="h-full min-h-[220px] flex items-center justify-center p-8 text-center text-slate-600 text-[11px]">
-            &gt; [待命中] 鏡頭健康監控運行中，尚無異常事件...
+          <div className="h-full min-h-[220px] flex items-center justify-center p-8 text-center text-slate-500 text-[11px]">
+            &gt; [待命中] 鏡頭健康監控運作中，尚無異常事件...
           </div>
         ) : (
           events.map((ev) => {
             let badgeBg = 'bg-black/80 border-slate-800 text-slate-400';
             let tag = 'INFO';
-            let tagColor = 'text-slate-500';
+            let tagColor = 'text-slate-400';
 
             if (ev.delta < 0) {
               badgeBg = 'bg-rose-950/70 border-rose-500/50 text-rose-300';
@@ -80,7 +81,7 @@ export const ActivityLogView: React.FC<ActivityLogViewProps> = ({ events, onClea
                   <span className={`text-[9px] font-bold px-1 py-0.2 rounded border border-slate-800 shrink-0 ${tagColor}`}>
                     {tag}
                   </span>
-                  <span className="text-slate-300 text-[11px] truncate">{stripEmoji(ev.message)}</span>
+                  <span className="text-slate-200 text-[11px] truncate">{stripEmoji(ev.message)}</span>
                 </div>
 
                 <div className="flex items-center gap-1.5 shrink-0">

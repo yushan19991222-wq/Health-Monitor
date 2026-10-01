@@ -180,7 +180,36 @@ export const AnimeCartoonEye: React.FC<{
 };
 
 // Global in-memory cache tracker for preloaded images
-const preloadedImageCache = new Set<string>();
+export const preloadedImageCache = new Set<string>();
+
+export const preloadImage = (url: string): Promise<void> => {
+  if (typeof window === 'undefined' || !url) return Promise.resolve();
+  if (preloadedImageCache.has(url)) return Promise.resolve();
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.referrerPolicy = 'no-referrer';
+    img.onload = () => {
+      preloadedImageCache.add(url);
+      resolve();
+    };
+    img.onerror = () => resolve();
+    img.src = url;
+
+    if (typeof img.decode === 'function') {
+      img
+        .decode()
+        .then(() => {
+          preloadedImageCache.add(url);
+          resolve();
+        })
+        .catch(() => {});
+    }
+  });
+};
+
+export const preloadImages = (urls: string[]): Promise<void[]> => {
+  return Promise.all(urls.map(preloadImage));
+};
 
 export const TacticalMemeImage: React.FC<TacticalMemeImageProps> = ({
   src,
@@ -204,9 +233,13 @@ export const TacticalMemeImage: React.FC<TacticalMemeImageProps> = ({
   }, [src, fallbackUrls]);
 
   const currentUrl = allUrls[currentSrcIndex] || src;
+  const isInstantUrl =
+    currentUrl.startsWith('/memes/') ||
+    currentUrl.startsWith('data:') ||
+    preloadedImageCache.has(currentUrl);
 
-  // If already in browser memory/cache, avoid loading spinner
-  const [isLoading, setIsLoading] = useState<boolean>(() => !preloadedImageCache.has(currentUrl));
+  // If already in browser memory/cache or local asset, avoid loading spinner
+  const [isLoading, setIsLoading] = useState<boolean>(() => !isInstantUrl);
   const [detectedFace, setDetectedFace] = useState<{ x: number; y: number }>(
     faceCenter || { x: 50, y: 26 }
   );
@@ -250,7 +283,13 @@ export const TacticalMemeImage: React.FC<TacticalMemeImageProps> = ({
   // Check cache and image completion when URL changes
   useEffect(() => {
     setHasError(false);
-    if (preloadedImageCache.has(currentUrl)) {
+    const isInstant =
+      currentUrl.startsWith('/memes/') ||
+      currentUrl.startsWith('data:') ||
+      preloadedImageCache.has(currentUrl);
+
+    if (isInstant) {
+      preloadedImageCache.add(currentUrl);
       setIsLoading(false);
       onImageReady?.();
     } else if (imgRef.current && imgRef.current.complete && imgRef.current.naturalWidth > 0) {
@@ -624,8 +663,8 @@ export const TacticalMemeImage: React.FC<TacticalMemeImageProps> = ({
       ref={containerRef}
       className="relative w-full h-full overflow-hidden flex items-center justify-center bg-black/95"
     >
-      {/* Loading Skeleton */}
-      {isLoading && (
+      {/* Loading Skeleton - only for slow external network images */}
+      {isLoading && !isInstantUrl && (
         <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-[#0a0c10] text-[#00d8ff] p-4">
           <RefreshCw className="w-5 h-5 sm:w-6 sm:h-6 animate-spin mb-1.5 text-[#00d8ff]" />
           <span className="text-[10px] sm:text-xs font-mono text-slate-400 tracking-wider">
@@ -634,17 +673,17 @@ export const TacticalMemeImage: React.FC<TacticalMemeImageProps> = ({
         </div>
       )}
 
-      {/* Real Image with No-Referrer and Error handling */}
+      {/* Real Image with No-Referrer, Sync decoding and High Priority for instant rendering */}
       <img
         ref={imgRef}
         src={currentUrl}
         alt={alt}
         loading="eager"
-        decoding="async"
+        decoding={isInstantUrl ? 'sync' : 'async'}
         referrerPolicy="no-referrer"
         onLoad={handleImageLoad}
         onError={handleImageError}
-        className={`${className} transition-opacity duration-150 ${isLoading ? 'opacity-30' : 'opacity-100'}`}
+        className={`${className} ${isLoading && !isInstantUrl ? 'opacity-30' : 'opacity-100'}`}
         style={{
           objectPosition: 'center center',
           maxHeight: '100%',

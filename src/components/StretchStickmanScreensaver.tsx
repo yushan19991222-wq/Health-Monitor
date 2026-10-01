@@ -951,12 +951,6 @@ export const StretchStickmanScreensaver: React.FC<StretchStickmanScreensaverProp
             <Activity className="w-3.5 h-3.5 animate-pulse shrink-0" />
             <span className="truncate">&gt; OVERWATCH // 30s 隨機站立動態體操</span>
           </div>
-
-          <span className="hidden md:inline text-slate-400 text-[11px] tracking-wide truncate">
-            {reason === 'yawn'
-              ? '腦部缺氧防護 // 站立伸展迅速充氧'
-              : '久坐超時防護 // 3 種隨機體操重置全身微循環'}
-          </span>
         </div>
 
         <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
@@ -1233,11 +1227,8 @@ export const StretchStickmanScreensaver: React.FC<StretchStickmanScreensaverProp
       <footer className="relative z-10 w-full pt-2.5 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between text-[10px] text-slate-500 gap-1.5">
         <div className="flex items-center gap-2">
           <span className="text-cyan-400 font-bold">[OVERWATCH // CALISTHENICS_OS]</span>
-          <span>每次隨機抽取 3 款科學舒展動作，每次 30 秒全面重置脊椎、肩頸與下肢微循環。</span>
         </div>
         <div className="flex items-center gap-3 font-mono">
-          <span>[SPACE] 暫停 / 繼續</span>
-          <span>•</span>
           <span className="text-emerald-400">&gt; BIOMECHANICS_ACTIVE</span>
         </div>
       </footer>
